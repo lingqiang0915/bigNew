@@ -16,6 +16,7 @@
 </head>
 
 <body>
+    <script src="./libs/http.js"></script>
     <div class="sider">
         <a href="#" class="logo"><img src="images/logo02.png" alt="logo"></a>
         <div class="user_info">
@@ -90,9 +91,9 @@
         // 一进入页面就发送ajax请求获取登入人员的信息渲染到页面
         $.ajax({
             type: 'get',
-            url: 'http://localhost:8080/api/v1/admin/user/info',
+            // url: 'http://localhost:8080/api/v1/admin/user/info',
+            url: BigNew.user_info,
             // 设置请求头，传入token
-
             success: function (backData) {
                 $('.user_info>img').attr('src', backData.data.userPic)
                 $('.user_info>span>i').text(backData.data.nickname)
