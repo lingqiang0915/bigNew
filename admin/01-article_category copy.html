@@ -54,13 +54,13 @@
     </div>
 
     <!-- 提示框模板页 -->
-    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel">修改类别</h4>
+                    <h4 class="modal-title" id="exampleModalLabel">修改类别</h4>
                 </div>
                 <div class="modal-body">
                     <form>
@@ -76,7 +76,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default " data-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-primary">编辑</button>
+                    <button type="button" class="btn btn-primary ">编辑</button>
                 </div>
             </div>
         </div>
@@ -92,8 +92,7 @@
             <td>{{$value.name}}</td>
             <td>{{$value.slug}}</td>
             <td class="text-center">
-                <a href="javascript:void(0)" data-toggle="modal" class=" btn btn-info btn-xs" bj_id={{$value.id}}
-                    data-target="#myModal">编辑</a>
+                <a href="javascript:void(0)" data-toggle="modal" class=" btn btn-info btn-xs" bj_id={{$value.id}}>编辑</a>
                 <a href="javascript:void(0)" class="btn btn-danger btn-xs" delect_id={{$value.id}}>删除</a>
             </td>
         </tr>
@@ -111,78 +110,85 @@
                     success: function (backData) {
                         var wzHtml = template('article_cat', backData)
                         $('tbody').html(wzHtml)
+                        // console.log(backData);
 
                     }
                 })
             }
             articleFx()
 
+            // 给新增分类按钮注册点击事件
+            $('#xinzengfenlei').on('click', function () {
+                $('.btn-primary').text('新增')
+                $('#exampleModal').modal()
+                // 获取用户输入的数据
+                // 给新增按钮注册点击事件
 
-            // 判断模态框为是谁触发的
-            $('#myModal').on('show.bs.modal', function (e) {
-                // console.log(e.relatedTarget);
-                // 利用e.relatedTarget为触发的元素判断触发的是为编辑还是新增
-                if (e.relatedTarget == $('#xinzengfenlei')[0]) {
-                    $('.btn-primary').text('新增')
-                    // 每次点击新增都清空输入框
+            })
 
+            // 点击编辑按钮显示
+            $('tbody').on('click', '.btn-info', function () {
 
-                    $('#recipient-name').val('')
-                    $('#recipient-password').val('')
-                } else {
-                    $('.btn-primary').text('编辑')
-                    // 当点击的按钮为编辑时获取id
-                    var bjID = $(e.relatedTarget).attr('bj_id');
+                $('.btn-primary').text('编辑')
+                $('#exampleModal').modal()
+                // 发送ajax请求，获取点击文章的信息
+                // 获取需要的参数
 
-                    console.log(bjID);
+                var id = $(this).attr('bj_id');
+                // console.log(id);
 
-                    $.ajax({
-                        type: 'get',
-                        url: BigNew.category_search,
-                        data: {
-                            id: bjID,
-                        },
-                        success: function (backData) {
-                            // console.log(backData);
-                            // 给模板设置内容为->服务器返回来的数据
-                            $('#recipient-name').val(backData.data[0].name)
-                            $('#recipient-password').val(backData.data[0].slug)
-                            $('.btn-primary').attr('data_id', bjID)
+                $.ajax({
+                    type: 'get',
+                    url: BigNew.category_search,
+                    data: {
+                        id: id,
+                    },
+                    success: function (backData) {
+                        // console.log(backData);
+                        // 给模板设置内容为->服务器返回来的数据
+                        $('#recipient-name').val(backData.data[0].name)
+                        $('#recipient-password').val(backData.data[0].slug)
+                        $('.btn-primary').attr('data_id', backData.data[0].id)
 
-                        }
-                    })
-                }
+                    }
+                })
             })
 
 
 
-            // 给新增/编辑按钮注册点击事件
+
+
+
             $('.btn-primary').on('click', function () {
-                // 判断是新增还是编辑
-                if ($(this).text() === '新增') {
-                    // 获取用户输入的数据
-                    var xzname = $('#recipient-name').val().trim()
-                    var xzslug = $('#recipient-password').val().trim()
-                    // 发送ajax请求
+                if ($(this).text() == '新增') {
+                    // 获取模板框输入的数据
+
+                    var catname = $('#recipient-name').val().trim()
+                    var catslug = $('#recipient-password').val().trim()
+
                     $.ajax({
                         type: 'post',
                         url: BigNew.category_add,
                         data: {
-                            name: xzname,
-                            slug: xzslug
+                            name: catname,
+                            slug: catslug
                         },
                         success: function (backData) {
                             console.log(backData);
-                            // 刷新页面，关闭模态框，清空模态框用户输入的数据
                             articleFx()
-                            $('#myModal').modal('hide')
-
+                            $('#exampleModal').modal('hide')
+                            // 设置为空
+                            $('#recipient-name').val('')
+                            $('#recipient-password').val('')
                         }
                     })
                 } else {
+
                     var data_id = $(this).attr('data_id')
                     var name = $('#recipient-name').val().trim()
                     var slug = $('#recipient-password').val().trim()
+                    console.log(name, slug);
+
                     $.ajax({
                         type: 'post',
                         url: BigNew.category_edit,
@@ -193,12 +199,30 @@
                         },
                         success: function (backData) {
                             articleFx()
-                            $("#myModal").modal("hide");
-
+                            $('#exampleModal').modal(
+                                'hide')
+                            $('#recipient-name').val('')
+                            $('#recipient-password').val('')
                         }
                     })
                 }
+
             })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
             // 点击删除按钮
@@ -224,6 +248,8 @@
                     })
                 }
             })
+
+
         })
     </script>
 

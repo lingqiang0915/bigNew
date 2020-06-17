@@ -88,23 +88,42 @@
     </div>
 
     <script>
-        // 一进入页面就发送ajax请求获取登入人员的信息渲染到页面
-        $.ajax({
-            type: 'get',
-            // url: 'http://localhost:8080/api/v1/admin/user/info',
-            url: BigNew.user_info,
-            // 设置请求头，传入token
-            success: function (backData) {
-                $('.user_info>img').attr('src', backData.data.userPic)
-                $('.user_info>span>i').text(backData.data.nickname)
-                $('.user_center_link>img').attr('src', backData.data.userPic)
-            }
-        })
+        $(function () {
+            // 一进入页面就发送ajax请求获取登入人员的信息渲染到页面
+            $.ajax({
+                type: 'get',
+                // url: 'http://localhost:8080/api/v1/admin/user/info',
+                url: BigNew.user_info,
+                // 设置请求头，传入token
+                success: function (backData) {
+                    $('.user_info>img').attr('src', backData.data.userPic)
+                    $('.user_info>span>i').text(backData.data.nickname)
+                    $('.user_center_link>img').attr('src', backData.data.userPic)
+                }
+            })
 
-        // 点击退出按钮
-        $('.logout').on('click', function () {
-            window.localStorage.removeItem('token');
-            window.location.href = './login.html'
+            // 点击退出按钮
+            $('.logout').on('click', function () {
+                window.localStorage.removeItem('token');
+                window.location.href = './login.html'
+            })
+
+
+            // 点击左侧边栏的按钮，添加类与其兄移出类
+            $('div.level01').on('click', function () {
+                $(this).addClass('active').siblings('div').removeClass('active');
+                if ($(this).index() == 1) {
+                    $('ul.level02').slideToggle()
+                    $('div.level01').eq(1).find('b').toggleClass('rotate0')
+                    // 当点击到这个按钮，默认选中二级菜单的第一个
+                    $('.level02 li').find('a')[0].click()
+                }
+            })
+
+            // 给二级菜单注册点击事件
+            $('.level02 li').on('click', function () {
+                $(this).addClass('active').siblings('li').removeClass('active')
+            })
         })
     </script>
 </body>

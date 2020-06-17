@@ -13,9 +13,13 @@
     <script src="./libs/jquery-1.12.4.min.js"></script>
     <!-- 引入模板引擎js文件 -->
     <script src="./libs/template-web.js"></script>
+    <!-- 引入分页插件 -->
+    <script src="./libs/jquery.twbsPagination.js"></script>
+    <script src="./libs/bootstrap/js/bootstrap.min.js"></script>
 </head>
 
 <body>
+    <script src="./libs/http.js"></script>
     <div class="container-fluid">
         <div class="common_title">
             文章列表
@@ -69,9 +73,205 @@
                 </tbody>
             </table>
             <div class="row text-center">
+                <!-- 分页插件的结构 -->
+                <ul id="pagination-demo" class="pagination-sm pagination">
+                </ul>
+                <p>没有获取到数据</p>
             </div>
+
+
         </div>
+
     </div>
+
+    <!-- 下拉选择框的模板 -->
+    <script id="sele" type="text/html">
+        <option value="">所有分类</option>
+        {{each data}}
+        <option id={{$value.id}} value={{$value.name}}>{{$value.name}}</option>
+        {{/each}}
+    </script>
+    <!-- 文章列表的模板 -->
+    <script id="wzlist" type="text/html">
+        {{each data.data}}
+        <tr>
+            <td>{{$value.title}}</td>
+            <td>{{$value.author}}</td>
+            <td>{{$value.category}}</td>
+            <td class="text-center">{{$value.date}}</td>
+            <td class="text-center">{{$value.state}}</td>
+            <td class="text-center">
+                <a href="article_edit.html" class="btn btn-default btn-xs">编辑</a>
+                <a href="javascript:void(0);" class="btn btn-danger btn-xs delete">删除</a>
+            </td>
+        </tr>
+        {{/each}}
+    </script>
+    <script>
+        $(function () {
+
+
+
+            // 获取所有的文章类型名称，渲染到下拉选择框
+            $.ajax({
+                url: BigNew.category_list,
+                success: function (backData) {
+                    var seleHtml = template('sele', backData)
+                    $('#selCategory').html(seleHtml)
+                    // console.log($('#selCategory').children().eq(1).val());
+                }
+            })
+
+            // 封装一个ajax请求，获取文章函数
+            function getData(mypage, callback) {
+                $.ajax({
+                    url: BigNew.article_query,
+                    data: {
+                        type: $('#selCategory option:selected').attr('id'),
+                        state: $('#selStatus').val(),
+                        page: mypage
+                    },
+                    success: function (backData) {
+                        // 渲染到页面
+                        var wzlistHtml = template('wzlist', backData)
+                        $('tbody').html(wzlistHtml)
+                        // 不为空才执行
+                        if (backData.data.totalCount != 0 && callback != null) {
+                            // 有数据就显示
+                            $('.pagination').show().next('p').hide()
+                            callback(backData)
+                        } else if (backData.data.totalCount == 0) {
+                            // // 没有数据就隐藏
+                            $('.pagination').hide().next('p').show()
+                        }
+                    }
+                })
+            }
+
+            /*  通过封装的方法实现的  */
+            // 一进入页面就触发点击事件,下拉选项默认的点击事件
+            getData(1, function (backData) {
+                $('#pagination-demo').twbsPagination({
+                    totalPages: backData.data.totalPage, //总页数
+                    visiblePages: 6,
+                    first: '首页',
+                    prev: '上一页',
+                    next: '下一页',
+                    last: '尾页',
+                    onPageClick: function (e, page) {
+                        // 点击页码的回调函数，发送ajax请求显示对应页码的数据
+                        getData(page, null)
+                    }
+
+                });
+            })
+
+            /*   通过封装的方法实现的  */
+            // 给筛选按钮注册单击事件
+            $('#btnSearch').on('click', function (e) {
+                e.preventDefault()
+                // 发送ajax请求获取所有的文章
+                getData(1, function (backData) {
+                    $('#pagination-demo').twbsPagination('changeTotalPages', backData
+                        .data.totalPage, 1)
+                })
+            })
+
+
+
+
+
+
+
+
+            // ---------------------------------------------------------------------------------------------------------------------
+
+            /* 未通过封装的方法实现 */
+
+            // 一进入页面就触发点击事件,下拉选项默认的点击事件
+            // $.ajax({
+            //     url: BigNew.article_query,
+            //     data: {
+            //         type: $('#selCategory option:selected').attr('id'),
+            //         state: $('#selStatus').val(),
+            //         page: 1
+            //     },
+            //     success: function (backData) {
+            //         console.log(backData);
+
+            //         // 调用模板引擎核心方法
+            //         var wzlistHtml = template('wzlist', backData)
+            //         // 渲染到页面
+            //         $('tbody').html(wzlistHtml)
+            //         // 分页插件的使用
+            //         $('#pagination-demo').twbsPagination({
+            //             totalPages: backData.data.totalPage, //总页数
+            //             visiblePages: 6,
+            //             first: '首页',
+            //             prev: '上一页',
+            //             next: '下一页',
+            //             last: '尾页',
+            //             onPageClick: function (e, page) {
+            //                 // 点击页码的回调函数，发送ajax请求显示对应页码的数据
+            //                 $.ajax({
+            //                     url: BigNew.article_query,
+            //                     data: {
+            //                         type: $('#selCategory option:selected')
+            //                             .attr('id'),
+            //                         state: $('#selStatus').val(),
+            //                         page: page
+            //                     },
+            //                     success: function (backData) {
+            //                         // console.log(backData);
+            //                         // 调用模板引擎核心方法
+            //                         var wzlistHtml = template('wzlist',
+            //                             backData)
+            //                         $('tbody').html(wzlistHtml)
+            //                     }
+            //                 })
+            //             }
+
+            //         });
+            //     }
+            // })
+
+
+
+
+
+
+
+
+            /* 未通过封装的方法实现 */
+
+
+
+            // $('#btnSearch').on('click', function (e) {
+            //     e.preventDefault()
+            //     // 发送ajax请求获取所有的文章
+            //     $.ajax({
+            //         url: BigNew.article_query,
+            //         data: {
+            //             type: $('#selCategory option:selected').attr('id'),
+            //             state: $('#selStatus').val(),
+            //             page: 1
+            //         },
+            //         success: function (backData) {
+            //             console.log(backData);
+            //             // 调用模板引擎核心方法
+            //             var wzlistHtml = template('wzlist', backData)
+            //             $('tbody').html(wzlistHtml)
+            //             $('#pagination-demo').twbsPagination('changeTotalPages', backData
+            //                 .data.totalPage, 1)
+            //         }
+            //     })
+            // })
+
+
+
+
+        })
+    </script>
 </body>
 
 </html>
