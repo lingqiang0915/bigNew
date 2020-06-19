@@ -101,8 +101,8 @@
             <td class="text-center">{{$value.date}}</td>
             <td class="text-center">{{$value.state}}</td>
             <td class="text-center">
-                <a href="article_edit.html" class="btn btn-default btn-xs">编辑</a>
-                <a href="javascript:void(0);" class="btn btn-danger btn-xs delete">删除</a>
+                <a href="article_edit.html?id={{$value.id}}" class="btn btn-default btn-xs" bj_id={{$value.id}}>编辑</a>
+                <a href="javascript:void(0);" class="btn btn-danger btn-xs delete" delete_id={{$value.id}}>删除</a>
             </td>
         </tr>
         {{/each}}
@@ -110,9 +110,9 @@
     <script>
         $(function () {
 
+            var currentpage = 1
 
-
-            // 获取所有的文章类型名称，渲染到下拉选择框
+            //一 ： 获取所有的文章类型名称，渲染到下拉选择框
             $.ajax({
                 url: BigNew.category_list,
                 success: function (backData) {
@@ -122,16 +122,19 @@
                 }
             })
 
-            // 封装一个ajax请求，获取文章函数
+            //二： 封装一个ajax请求，获取文章函数
             function getData(mypage, callback) {
                 $.ajax({
                     url: BigNew.article_query,
                     data: {
                         type: $('#selCategory option:selected').attr('id'),
                         state: $('#selStatus').val(),
-                        page: mypage
+                        page: mypage,
+
                     },
                     success: function (backData) {
+                        console.log(backData);
+
                         // 渲染到页面
                         var wzlistHtml = template('wzlist', backData)
                         $('tbody').html(wzlistHtml)
@@ -143,13 +146,19 @@
                         } else if (backData.data.totalCount == 0) {
                             // // 没有数据就隐藏
                             $('.pagination').hide().next('p').show()
+                        } else if (mypage - 1 == backData.data.totalPage && $('tbody tr').length ==
+                            0) {
+                            mypage -= 1;
+                            //调用changeTotalPages 这个方法 根据新的总页数 重新生成分页结构.
+                            $('#pagination-demo').twbsPagination('changeTotalPages',
+                                backData.data.totalPage, mypage);
                         }
                     }
                 })
             }
 
             /*  通过封装的方法实现的  */
-            // 一进入页面就触发点击事件,下拉选项默认的点击事件
+            // 三：  一进入页面就触发点击事件,下拉选项默认的点击事件
             getData(1, function (backData) {
                 $('#pagination-demo').twbsPagination({
                     totalPages: backData.data.totalPage, //总页数
@@ -160,6 +169,7 @@
                     last: '尾页',
                     onPageClick: function (e, page) {
                         // 点击页码的回调函数，发送ajax请求显示对应页码的数据
+                        currentpage = page
                         getData(page, null)
                     }
 
@@ -167,22 +177,56 @@
             })
 
             /*   通过封装的方法实现的  */
-            // 给筛选按钮注册单击事件
+            //四： 给筛选按钮注册单击事件
             $('#btnSearch').on('click', function (e) {
                 e.preventDefault()
                 // 发送ajax请求获取所有的文章
                 getData(1, function (backData) {
+                    /* 
+                     当点击筛选按钮页码的总页数发生改变所以利用页码的插件的方法 
+                     利用页码插件的方法 会根据新的总页码数绘制新的页码
+                     */
+
+
                     $('#pagination-demo').twbsPagination('changeTotalPages', backData
                         .data.totalPage, 1)
                 })
             })
 
+            // 五：单击删除按钮
+            $('tbody').on('click', '.delete', function () {
+                // 获去该文章的id
+                if (confirm('你确定要删除吗')) {
+                    var deleteId = $(this).attr('delete_id');
+                    // console.log(deleteId);
+
+                    // 发生ajax请求来删除该文章
+                    $.ajax({
+                        type: 'post',
+                        url: BigNew.article_delete,
+                        data: {
+                            id: deleteId
+                        },
+                        success: function (backData) {
+                            console.log(backData);
+                            if (backData.code == 204) {
+                                getData(currentpage, null)
+
+
+                            }
+
+                        }
+                    })
+                }
+            })
 
 
 
+            // 给新增按钮注册一个点击事件
+            $('#release_btn').on('click', function () {
 
-
-
+                window.parent.$('.level02 li:eq(1)').click()
+            })
 
             // ---------------------------------------------------------------------------------------------------------------------
 
